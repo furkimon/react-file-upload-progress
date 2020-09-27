@@ -1,129 +1,115 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import styles from './styles.module.css'
-import { BsDot, BsThreeDotsVertical } from 'react-icons/bs'
 import { FiMinimize2, FiMaximize2 } from 'react-icons/fi'
 
+
 export const UploadProgress = ({ items }) => {
-  const [detailsOpen, setDetailsOpen] = useState(false)
-
-  const totalFileSize = () => {
-    let total = 0
-    items.map((item) => {
-      total += parseInt(item.size)
-    })
-    return total
-  }
-
-  const totalLeft = () => {
-    let seconds = []
-    items.map((item) => {
-      seconds.push(parseInt(item.secLeft))
-    })
-    return Math.max(...seconds)
-  }
-
-  const calculateTotalPercentage = () => {
-    let totalDownloaded = 0
-    if (items.length === 0) {
-      return 0
+    const [detailsOpen, setDetailsOpen] = useState(false)
+    const totalFileSize = () => {
+        let total = 0
+        items.map((item) => {
+            return total += parseInt(item.size)
+        })
+        return total
     }
-    items.map((file) => {
-      totalDownloaded += (parseInt(file.size) * file.completedPercentage) / 100
-    })
-    return ((totalDownloaded / totalFileSize()) * 100).toFixed(0)
-  }
 
-  const renderList = () => {
-    if (detailsOpen) {
-      return items.map((item) => {
+    const totalLeft = () => {
+        let seconds = []
+        items.map((item) => {
+            return seconds.push(parseInt(item.secLeft))
+        })
+        return Math.max(...seconds)
+    }
+
+    const calculateTotalPercentage = () => {
+        let totalDownloaded = 0
+        if (items.length === 0) {
+            return 0
+        }
+        items.map((file) => {
+            return totalDownloaded += (parseInt(file.size) * file.completedPercentage) / 100
+        })
+        return ((totalDownloaded / totalFileSize()) * 100).toFixed(0)
+    }
+
+    detailsOpen
+        ? document.documentElement.style.setProperty('--width', 0 + "%")
+        : document.documentElement.style.setProperty('--width', calculateTotalPercentage() + "%")
+
+    items.map(item => { return document.documentElement.style.setProperty('--width2', item.completedPercentage + "%") })
+
+    const createListItems = () => {
         return (
-          <div className={styles.listItem}>
-            <div className={styles.listItemLeft}>
-              <div>{item.fileName}</div>
-              <div className={styles.itemProgressBar}>
-                <div
-                  className={styles.itemProgressBarInner}
-                  style={{ width: `${item.completedPercentage}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className={styles.listItemRight}>
-              <div>{item.completedPercentage}%</div>
-              <BsDot />
-              <div>{item.secLeft}s left</div>
-            </div>
-          </div>
+            items.map((item) => {
+                return (
+                    <div className={styles.listItem}>
+                        <div className={styles.listItem__wrapper}>
+                            <div className={styles.listItem__left}>
+                                <div className={styles.listItem__left__top}>
+                                    {item.fileName}
+                                </div>
+                                <div className={styles.listItem__left__bottom}>
+                                    <span className={styles.upload__bar_item}></span>
+                                </div>
+                            </div>
+                            <div className={styles.listItem__right}>
+                                {parseInt(item.completedPercentage)}% • {item.secLeft}s left
+                            </div>
+                        </div>
+                    </div>
+                )
+            })
         )
-      })
     }
-    return null
-  }
 
-  return (
-    <div style={{ margin: '50px' }}>
-      <div className={styles.container}>
-        <div
-          className={
-            detailsOpen
-              ? styles.mainBox + ' ' + styles.mainBoxList
-              : styles.mainBox
-          }
-        >
-          <div
-            className={
-              calculateTotalPercentage() == 100
-                ? styles.mainProgress + ' ' + styles.mainProgressCompleted
-                : styles.mainProgress
-            }
-            style={
-              detailsOpen
-                ? { width: '0' }
-                : { width: `${calculateTotalPercentage()}%` }
-            }
-          ></div>
-          <div
-            className={styles.lineProgress}
-            style={
-              detailsOpen
-                ? { width: '0' }
-                : { width: `${calculateTotalPercentage()}%` }
-            }
-          ></div>
-          <div className={styles.boxContent}>
-            <div className={styles.contentLeft}>
-              <div className={styles.uploadingHeader}>Uploading 2 Files</div>
-              <div className={styles.uploadingDescription}>
-                {calculateTotalPercentage()}% <BsDot /> {totalLeft()}s left
-              </div>
+    const showDetails = () => {
+        setDetailsOpen(!detailsOpen)
+    }
+    
+    
+    // function handleClick(){
+    //     fileInput.current.focus();
+    // }
+
+    // function handleFileSelected(e){
+    //     const files = Array.from(e.target.files)
+    // }
+    
+    // const fileInput = useRef(null)
+    
+    return (
+        <div className={styles.whole}>
+            {/* <button onClick={handleClick}>Open</button>
+            <input ref={fileInput} id="file-input" type="file" multiple onChange={handleFileSelected}  /> */}
+            <div className={styles.uploadProgress}>
+                <div className={styles.mainBox}>
+
+                    <div className={styles.mainBox__top}>
+                        <div className={styles.mainBox__left}>
+
+                            <div className={styles.mainBox__title}>Uploading {items.length} files</div>
+                            <div className={styles.mainBox__info}>
+                                <div className={styles.mainBox__percentage}>{calculateTotalPercentage()}%</div>
+                                <div className={styles.mainBox__seconds}>{totalLeft()}s left</div>
+                            </div>
+
+                        </div>
+                        <div className={styles.mainBox__right} onClick={showDetails}>
+                            {detailsOpen
+                                ? <FiMinimize2 className={styles.minimize} size={'25px'} />
+                                : <FiMaximize2 className={styles.maximize} size={'25px'} />}
+                        </div>
+                    </div>
+                    <div className={styles.mainBox__bottom}>
+                        <span className={styles.upload__bar}></span>
+                    </div>
+                </div>
             </div>
-            <div className={styles.contenRight}>
-              <div onClick={() => setDetailsOpen(!detailsOpen)}>
-                {detailsOpen ? (
-                  <FiMinimize2
-                    size={'25px'}
-                    color={'grey'}
-                    className={styles.showMore}
-                  />
-                ) : (
-                  <FiMaximize2
-                    size={'25px'}
-                    color={'grey'}
-                    className={styles.showMore}
-                  />
-                )}
-              </div>
-              <div onClick={() => console.log('test')}>
-                <BsThreeDotsVertical
-                  size={'25px'}
-                  color={'grey'}
-                  className={styles.showOptions}
-                />
-              </div>
-            </div>
-          </div>
+            {detailsOpen
+                ? <div className={styles.listItems}>{createListItems()}</div>
+                : null}
         </div>
-      </div>
-      <div className={styles.fileList}>{renderList()}</div>
-    </div>
-  )
+    )
 }
+
+// export default UploadProgress

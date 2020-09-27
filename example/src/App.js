@@ -46,7 +46,8 @@ const App = () => {
       size: '7654321',
       completedPercentage: item2Completed,
       secLeft: item2Seconds
-    }
+    },
+    
   ]
   return <UploadProgress items={items} />
 }
