@@ -1,13 +1,50 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import styles from './styles.module.css'
 import { FiMinimize2, FiMaximize2 } from 'react-icons/fi'
 
 
-export const UploadProgress = ({ items }) => {
+export const UploadProgress = () => {
+    const fileInput = useRef(null)
+
     const [detailsOpen, setDetailsOpen] = useState(false)
+    const [files, setFiles] = useState([])
+
+    const speed = 1024 * 1024
+
+    useEffect(() => {
+        let arrayList = []
+        
+        if(files.length>0){
+            var temp = files[0].itemSec
+            console.log("temp  : " + temp)
+        }
+
+        if (files.length > 0 && temp > 0) {
+            
+            var timer = setTimeout(() => {
+                files.map((file) =>  {
+                    if (file.itemComp < 100) {
+                        let tick = Math.floor(100 / file.itemSec)
+                        file.itemComp += tick
+                        if (file.itemComp > 100) file.itemComp = 100
+                    }
+                    if (file.itemSec > 0) {
+                        file.itemSec -= 1
+                    }
+                    arrayList.push(file)
+                })
+                setFiles(arrayList)
+            }, 1000)
+        }
+        return () => {
+            clearTimeout(timer)
+        }
+    }, [files])
+
+
     const totalFileSize = () => {
         let total = 0
-        items.map((item) => {
+        files.map((item) => {
             return total += parseInt(item.size)
         })
         return total
@@ -15,45 +52,44 @@ export const UploadProgress = ({ items }) => {
 
     const totalLeft = () => {
         let seconds = []
-        items.map((item) => {
-            return seconds.push(parseInt(item.secLeft))
-        })
+        files.map(file => seconds.push(file.itemSec))
         return Math.max(...seconds)
     }
 
     const calculateTotalPercentage = () => {
         let totalDownloaded = 0
-        if (items.length === 0) {
+        if (files.length === 0) {
             return 0
         }
-        items.map((file) => {
-            return totalDownloaded += (parseInt(file.size) * file.completedPercentage) / 100
+
+        files.map((file) => {
+            return totalDownloaded += (parseInt(file.size) * file.itemComp) / 100
         })
         return ((totalDownloaded / totalFileSize()) * 100).toFixed(0)
     }
+
+
 
     detailsOpen
         ? document.documentElement.style.setProperty('--width', 0 + "%")
         : document.documentElement.style.setProperty('--width', calculateTotalPercentage() + "%")
 
-    items.map(item => { return document.documentElement.style.setProperty('--width2', item.completedPercentage + "%") })
-
     const createListItems = () => {
         return (
-            items.map((item) => {
+            files.map((item, i) => {
                 return (
-                    <div className={styles.listItem}>
+                    <div className={styles.listItem} key={i}>
                         <div className={styles.listItem__wrapper}>
                             <div className={styles.listItem__left}>
                                 <div className={styles.listItem__left__top}>
-                                    {item.fileName}
+                                    {item.name}
                                 </div>
                                 <div className={styles.listItem__left__bottom}>
-                                    <span className={styles.upload__bar_item}></span>
+                                    <span className={styles.upload__bar_item} style={{ width: item.itemComp + "%" }}></span>
                                 </div>
                             </div>
                             <div className={styles.listItem__right}>
-                                {parseInt(item.completedPercentage)}% • {item.secLeft}s left
+                                {item.itemComp}% • {item.itemSec > 0 ? item.itemSec + 's left' : "Done!"}
                             </div>
                         </div>
                     </div>
@@ -65,32 +101,41 @@ export const UploadProgress = ({ items }) => {
     const showDetails = () => {
         setDetailsOpen(!detailsOpen)
     }
-    
-    
-    // function handleClick(){
-    //     fileInput.current.focus();
-    // }
 
-    // function handleFileSelected(e){
-    //     const files = Array.from(e.target.files)
-    // }
-    
-    // const fileInput = useRef(null)
-    
+    function handleClick() {
+        fileInput.current.click()
+    }
+
+    function handleFileSelected(e) {
+        const selectedFiles = Array.from(e.target.files)
+        selectedFiles.map((file) => {
+            return (
+                file.itemSec = Math.floor(file.size / speed),
+                file.itemComp = 0
+            )
+        })
+
+        setFiles(selectedFiles)
+
+    }
+
+
     return (
         <div className={styles.whole}>
-            {/* <button onClick={handleClick}>Open</button>
-            <input ref={fileInput} id="file-input" type="file" multiple onChange={handleFileSelected}  /> */}
+            <button className={styles.choose__button} onClick={handleClick}>Choose files</button>
+            <input ref={fileInput} id="file-input" className={styles.file__input} type="file" multiple onChange={handleFileSelected} />
             <div className={styles.uploadProgress}>
                 <div className={styles.mainBox}>
 
                     <div className={styles.mainBox__top}>
                         <div className={styles.mainBox__left}>
 
-                            <div className={styles.mainBox__title}>Uploading {items.length} files</div>
+                            <div className={styles.mainBox__title}>
+                                {files.length > 0 ? "Uploading " + files.length + " files" : "Choose files to Upload"}
+                            </div>
                             <div className={styles.mainBox__info}>
-                                <div className={styles.mainBox__percentage}>{calculateTotalPercentage()}%</div>
-                                <div className={styles.mainBox__seconds}>{totalLeft()}s left</div>
+                                {(files.length > 0) ? <div className={styles.mainBox__percentage}>{calculateTotalPercentage()}%</div> : null}
+                                {(files.length > 0) ? <div className={styles.mainBox__seconds}>{totalLeft() > 0 ? totalLeft() + 's left' : 'Done!'}</div> : null}
                             </div>
 
                         </div>
@@ -112,4 +157,3 @@ export const UploadProgress = ({ items }) => {
     )
 }
 
-// export default UploadProgress
